@@ -2,7 +2,7 @@ import "./App.css";
 import List from "./components/List";
 import Search from "./components/Search";
 import logo from "./logo.svg";
-import { useState } from "react";
+import usePersistence from "./hooks/usePersistence";
 
 const title = "React Training";
 
@@ -46,7 +46,7 @@ const listOfItems = [
 ];
 
 function App() {
-  const [searchText, setSearchText] = useState("");
+  const [searchText, setSearchText]:any = usePersistence("searchTerm","React");
 
   function handleChange(event: any) {
     setSearchText(event.target.value);
