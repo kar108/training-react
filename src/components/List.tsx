@@ -1,7 +1,13 @@
 import "./List.css";
 import Item from "./Item";
+import { StoryType } from "../types";
 
-const List = ({ listOfItems }: any) => {
+type ListProps={
+  listOfItems:Array<StoryType>;
+  onClickDelete:(e:number)=>void;
+}
+
+const List = ({ listOfItems ,onClickDelete}: ListProps) => {
   return (
     <div>
       <table>
@@ -11,11 +17,12 @@ const List = ({ listOfItems }: any) => {
             <th>URL</th>
             <th>Author</th>
             <th>Comments</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
-          {listOfItems.map(({objectId,...rest}: any) => (
-            <Item key={objectId} {...rest}/>
+          {listOfItems.map((item: any) => (
+            <Item key={item.objectId} item={item} onClickDelete={onClickDelete}/>
           ))}
         </tbody>
       </table>
