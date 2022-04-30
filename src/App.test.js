@@ -1,9 +1,9 @@
 import { title, storiesReducer } from "./App";
 import { render, screen, fireEvent, act } from "@testing-library/react";
-import Item from "./components/Item";
+import Item from "./component/Item";
 import App, { AppContext } from "./App";
 import { BrowserRouter } from "react-router-dom";
-import InputWithLabel from "./components/InputWithLabel";
+import InputWithLabel from "./component/InputWithLabel";
 import axios from "axios";
 
 describe("unit testing basics", () => {
