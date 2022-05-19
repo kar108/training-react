@@ -9,11 +9,16 @@ import React, {
   useReducer,
   useCallback,
   createContext,
+  useState,
 } from "react";
 import axios from "axios";
 import { useDebounce } from "./hooks/useDebounce";
 import { StateType, StoryType, ActionType } from "./types";
 import { Link } from "react-router-dom";
+import { Box } from "@mui/system";
+import { Button, Paper } from "@mui/material";
+import Pagenumbers from "./component/Pagenumbers";
+import Pages from "./Pages.json"
 
 export const title: string = "React Training";
 
@@ -36,7 +41,7 @@ export function storiesReducer(state: StateType, action: ActionType) {
 }
 
 const API_ENDPOINT = "https://hn.algolia.com/api/v1/search?query=";
-
+const API = "https://hn.algolia.com/api/v1/search?page=";
 interface AppContextType {
   onClickDelete: (e: number) => void;
 }
@@ -45,7 +50,10 @@ export const AppContext = createContext<AppContextType | null>(null);
 
 function App(): JSX.Element {
   const [searchText, setSearchText] = usePersistence("searchTerm", "React");
+  const [pagenumber, setPagenumber] =  useState(1);
+  const Pageurl= useDebounce(API + pagenumber);
   const debouncedUrl = useDebounce(API_ENDPOINT + searchText);
+  console.log(Pageurl)
 
   const [stories, dispatchStories] = useReducer(storiesReducer, {
     data: [],
@@ -75,11 +83,34 @@ function App(): JSX.Element {
     }
   }, [debouncedUrl]);
 
+
+  const handlepageurl = useCallback(async () => {
+    dispatchStories({ type: "INIT_FETCH" });
+    try {
+      const response = await axios.get(Pageurl);
+      dispatchStories({
+        type: "SET_STORIES",
+        payload: { data: response.data.hits },
+      });
+    } catch {
+      dispatchStories({ type: "FETCH_FAILURE" });
+    }
+  }, [Pageurl]);
+
   useEffect(() => {
     handleFetchStories();
   }, [handleFetchStories]);
 
+  useEffect(() => {
+    handlepageurl();
+  }, [handlepageurl]);
+
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
+    setSearchText(event.target.value);
+  }
+
+
+  function handlePage(event: React.ChangeEvent<HTMLInputElement>) {
     setSearchText(event.target.value);
   }
 
@@ -118,9 +149,23 @@ function App(): JSX.Element {
       {stories.isLoading ? (
         <h1 style={{ marginTop: "10rem" }}>Loading</h1>
       ) : (
+        <div>
         <AppContext.Provider value={{ onClickDelete: handleDeleteClick }}>
           <List listOfItems={stories.data} />
         </AppContext.Provider>
+          <Box 
+          display="flex"
+          justifyContent="space-around"
+          bottom="0"
+          left="0"
+          right="0"
+          marginTop="2rem"
+          >
+          {Pages.map((page,index)=>(
+              <Pagenumbers onClick={()=>setPagenumber(index+1)} index={index+1}/>
+            ))}
+          </Box>
+        </div>
       )}
     </div>
   );

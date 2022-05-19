@@ -3,6 +3,7 @@ import "./List.css";
 import Item from "./Item";
 import { StoryType } from "../types";
 import { useState } from "react";
+import { Paper } from "@mui/material";
 
 type ListProps = {
   listOfItems: Array<StoryType>;
