@@ -19,6 +19,7 @@ import { Box } from "@mui/system";
 import { Button, Paper } from "@mui/material";
 import Pagenumbers from "./component/Pagenumbers";
 import Pages from "./Pages.json"
+import InfiniteScroll from "react-infinite-scroll-component";
 
 export const title: string = "React Training";
 
@@ -49,17 +50,19 @@ interface AppContextType {
 export const AppContext = createContext<AppContextType | null>(null);
 
 function App(): JSX.Element {
+  const [hasMore, sethasMore] = useState(true);
   const [searchText, setSearchText] = usePersistence("searchTerm", "React");
   const [pagenumber, setPagenumber] =  useState(1);
   const Pageurl= useDebounce(API + pagenumber);
   const debouncedUrl = useDebounce(API_ENDPOINT + searchText);
-  console.log(Pageurl)
-
   const [stories, dispatchStories] = useReducer(storiesReducer, {
     data: [],
     isError: false,
     isLoading: false,
   });
+  
+
+  console.log(stories.data);
 
   const sumOfComments = useMemo(
     () =>
@@ -84,6 +87,12 @@ function App(): JSX.Element {
   }, [debouncedUrl]);
 
 
+
+  useEffect(() => {
+    handleFetchStories();
+  }, [handleFetchStories]);
+
+
   const handlepageurl = useCallback(async () => {
     dispatchStories({ type: "INIT_FETCH" });
     try {
@@ -97,9 +106,7 @@ function App(): JSX.Element {
     }
   }, [Pageurl]);
 
-  useEffect(() => {
-    handleFetchStories();
-  }, [handleFetchStories]);
+
 
   useEffect(() => {
     handlepageurl();
@@ -110,14 +117,11 @@ function App(): JSX.Element {
   }
 
 
-  function handlePage(event: React.ChangeEvent<HTMLInputElement>) {
-    setSearchText(event.target.value);
-  }
 
   const handleDeleteClick = useCallback((objectId: number) => {
     console.log("Delete click captured", objectId);
     dispatchStories({ type: "REMOVE_STORY", payload: { id: objectId } });
-  }, []);
+  },[]);
 
   if (stories.isError) {
     return (
@@ -126,6 +130,29 @@ function App(): JSX.Element {
       </h1>
     );
   }
+
+  
+
+  const fetchnewdata = async () => {
+    const res = await fetch(
+      `https://hn.algolia.com/api/v1/search?page=${pagenumber}`);
+    const data = await res.json();
+    return data.hits;
+  };
+
+
+  const fetchData = async () => {
+    const extradata = await fetchnewdata();
+
+    dispatchStories({
+      type: "SET_STORIES",
+      payload: { data:[...stories.data,...extradata]},
+    });
+    
+    if (extradata.length==0||extradata.length<20)
+    {sethasMore(false);}
+    setPagenumber(pagenumber + 1);
+  };
 
   return (
     <div>
@@ -151,20 +178,16 @@ function App(): JSX.Element {
       ) : (
         <div>
         <AppContext.Provider value={{ onClickDelete: handleDeleteClick }}>
-          <List listOfItems={stories.data} />
+            <InfiniteScroll
+          dataLength={stories.data.length}
+          next={fetchData}
+          hasMore={hasMore}
+          loader={<h1></h1>}
+          endMessage={<h1>End.....</h1>}
+        >
+        <List listOfItems={stories.data} />
+        </InfiniteScroll>
         </AppContext.Provider>
-          <Box 
-          display="flex"
-          justifyContent="space-around"
-          bottom="0"
-          left="0"
-          right="0"
-          marginTop="2rem"
-          >
-          {Pages.map((page,index)=>(
-              <Pagenumbers onClick={()=>setPagenumber(index+1)} index={index+1}/>
-            ))}
-          </Box>
         </div>
       )}
     </div>
