@@ -1,6 +1,8 @@
 import { useContext } from "react";
 import { StoryType } from "../types";
 import { AppContext } from "../App";
+import { Navigate } from "react-router-dom";
+import Titlejson from "./Titlejson";
 
 type ItemProps = {
   item: StoryType;
